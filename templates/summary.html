@@ -5,21 +5,24 @@
 </head>
 <body>
 
-<h1>Summary</h1>
+<h1>Study Summary</h1>
 
 <h2>Subjects</h2>
 <ul>
-{% for sub in subjects %}
-    <li>{{ sub.name }}</li>
-{% endfor %}
+    {% for sub in subjects %}
+        <li>{{ sub.id }} — {{ sub.name }}</li>
+    {% endfor %}
 </ul>
 
-<h2>Study Sessions</h2>
+<h2>Sessions</h2>
 <ul>
-{% for s in sessions %}
-    <li>{{ s.topic }} - {{ s.duration }} mins</li>
-{% endfor %}
+    {% for ses in sessions %}
+        <li>Session ID: {{ ses.id }} | Subject ID: {{ ses.subject_id }} | Duration: {{ ses.duration }} minutes</li>
+    {% endfor %}
 </ul>
+
+<h2>Total Study Time:</h2>
+<p>{{ total_time }} minutes</p>
 
 <br>
 <a href="/">Home</a>
