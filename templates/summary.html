@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Summary</title>
+</head>
+<body>
+
+<h1>Summary</h1>
+
+<h2>Subjects</h2>
+<ul>
+{% for sub in subjects %}
+    <li>{{ sub.name }}</li>
+{% endfor %}
+</ul>
+
+<h2>Study Sessions</h2>
+<ul>
+{% for s in sessions %}
+    <li>{{ s.topic }} - {{ s.duration }} mins</li>
+{% endfor %}
+</ul>
+
+<br>
+<a href="/">Home</a>
+
+</body>
+</html>

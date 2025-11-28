@@ -16,6 +16,19 @@ from models.session import StudySession
 def home():
     return render_template("home.html")
 
+@app.route("/subject")
+def subject():
+    return render_template("subject.html")
+
+@app.route("/session")
+def session():
+    return render_template("session.html")
+
+@app.route("/summary")
+def summary():
+    return render_template("summary.html")
+
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
