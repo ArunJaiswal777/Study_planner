@@ -1,31 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Summary</title>
-</head>
-<body>
+<div class="summary-box">
+    <h1>Study Summary</h1>
 
-<h1>Study Summary</h1>
+    <h2>Subjects</h2>
+    <ul>
+        {% for s in subjects %}
+        <li>{{ s.name }}</li>
+        {% endfor %}
+    </ul>
 
-<h2>Subjects</h2>
-<ul>
-    {% for sub in subjects %}
-        <li>{{ sub.id }} — {{ sub.name }}</li>
-    {% endfor %}
-</ul>
+    <h2>Sessions</h2>
+    <ul>
+        {% for s in sessions %}
+        <li>{{ s.subject_name }} — {{ s.duration }} minutes</li>
+        {% endfor %}
+    </ul>
 
-<h2>Sessions</h2>
-<ul>
-    {% for ses in sessions %}
-        <li>Session ID: {{ ses.id }} | Subject ID: {{ ses.subject_id }} | Duration: {{ ses.duration }} minutes</li>
-    {% endfor %}
-</ul>
+    <h2>Total Study Time:</h2>
+    <p>{{ total_time }} minutes</p>
 
-<h2>Total Study Time:</h2>
-<p>{{ total_time }} minutes</p>
-
-<br>
-<a href="/">Home</a>
-
-</body>
-</html>
+    <br>
+    <a href="/">Home</a>
+</div>
