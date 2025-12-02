@@ -74,7 +74,7 @@ def login():
 
         if user and user.check_password(password):
             session["user_id"] = user.id
-            return redirect(url_for("home"))
+            return redirect(url_for("dashboard"))
 
         return render_template("login.html", error="Invalid username or password!")
 
@@ -122,6 +122,34 @@ def add_subject():
     return redirect(url_for("subject_page"))
 
 
+@app.route("/edit_subject/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_subject(id):
+    subject = Subject.query.filter_by(id=id, user_id=session["user_id"]).first_or_404()
+
+    if request.method == "POST":
+        subject.name = request.form.get("name")
+        subject.difficulty = request.form.get("difficulty")
+        db.session.commit()
+        return redirect("/subject")
+
+    return render_template("edit_subject.html", subject=subject)
+
+
+@app.route("/delete_subject/<int:id>")
+@login_required
+def delete_subject(id):
+    subject = Subject.query.filter_by(id=id, user_id=session["user_id"]).first_or_404()
+
+    # Delete its sessions also
+    StudySession.query.filter_by(subject_id=id).delete()
+
+    db.session.delete(subject)
+    db.session.commit()
+    return redirect("/subject")
+
+
+
 # ------------------- SESSION -------------------
 
 @app.route("/session")
@@ -149,6 +177,31 @@ def add_session():
     return redirect(url_for("session_page"))
 
 
+@app.route("/edit_session/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_session(id):
+    session_data = StudySession.query.filter_by(id=id, user_id=session["user_id"]).first_or_404()
+
+    if request.method == "POST":
+        session_data.subject_id = request.form.get("subject_id")
+        session_data.duration = request.form.get("duration")
+        db.session.commit()
+        return redirect("/sessions")
+
+    subjects = Subject.query.filter_by(user_id=session["user_id"]).all()
+    return render_template("edit_session.html", session=session_data, subjects=subjects)
+
+
+@app.route("/delete_session/<int:id>")
+@login_required
+def delete_session(id):
+    session_data = StudySession.query.filter_by(id=id, user_id=session["user_id"]).first_or_404()
+
+    db.session.delete(session_data)
+    db.session.commit()
+    return redirect("/sessions")
+
+
 # ------------------- SUMMARY -------------------
 
 @app.route("/summary")
@@ -173,6 +226,30 @@ def summary():
         subjects=subjects,
         sessions=detailed_sessions,
         total_time=total_time
+    )
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    user_id = session["user_id"]
+
+    total_subjects = Subject.query.filter_by(user_id=user_id).count()
+    total_sessions = StudySession.query.filter_by(user_id=user_id).count()
+
+    total_minutes = db.session.query(
+        db.func.sum(StudySession.duration)
+    ).filter_by(user_id=user_id).scalar() or 0
+
+    # Fetch username for display
+    user = User.query.get(user_id)
+
+    return render_template(
+        "dashboard.html",
+        name=user.username,
+        subjects=total_subjects,
+        sessions=total_sessions,
+        minutes=total_minutes
     )
 
 

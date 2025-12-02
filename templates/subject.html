@@ -5,29 +5,31 @@
     <title>Add Subject</title>
 </head>
 <body>
+<h1>Your Subjects</h1>
 
-<h1>Add Subject</h1>
+<table border="1">
+<tr>
+  <th>Name</th>
+  <th>Difficulty</th>
+  <th>Actions</th>
+</tr>
 
-<form action="/add_subject" method="POST">
-    <div class="form-group">
-    <label>Subject Name:</label>
-    <input type="text" name="name" required>
-    </div>
-
-    <div class="form-group"></div>
-    <label>Difficulty</label>
-    <select name="difficulty" required>
-        <option value="Easy">Easy</option>
-        <option value="Medium">Medium</option>
-        <option value="Hard">Hard</option>
-    </select>
-    </div>
-
-    <button type="submit">Add</button>
-</form>
+{% for s in subjects %}
+<tr>
+  <td>{{ s.name }}</td>
+  <td>{{ s.difficulty }}</td>
+  <td>
+    <a href="/edit_subject/{{ s.id }}">Edit</a> |
+    <a href="/delete_subject/{{ s.id }}" onclick="return confirm('Delete this subject?')">Delete</a>
+  </td>
+</tr>
+{% endfor %}
+</table>
 
 <br>
-<a href="/">Home</a>
+<a href="/add_subject">Add New Subject</a>
+<br><br>
+<a href="/">Back to Dashboard</a>
 
 </body>
 </html>
