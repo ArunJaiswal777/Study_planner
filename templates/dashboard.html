@@ -128,7 +128,7 @@
 
 
     <div class="links">
-        <a href="/subject">➕ Add Subject</a>
+        <a href="/add_subject">➕ Add Subject</a>
         <a href="/session">🕒 Add Study Session</a>
         <a href="/summary">📊 View Detailed Summary</a>
     </div>
@@ -153,3 +153,17 @@
 
 </body>
 </html>
+<h3>Time per Subject</h3>
+<table border="1" cellpadding="5">
+<tr>
+    <th>Subject</th>
+    <th>Total Minutes</th>
+</tr>
+
+{% for s, mins in time_per_subject %}
+<tr>
+    <td>{{ s }}</td>
+    <td>{{ mins }}</td>
+</tr>
+{% endfor %}
+</table>

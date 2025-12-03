@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from database import db
+from datetime import date, datetime
 
 app = Flask(__name__)
 
@@ -92,7 +93,7 @@ def logout():
 @app.route("/")
 @login_required
 def home():
-    return render_template("home.html")
+    return render_template("dashboard.html")
 
 
 # ------------------- SUBJECT -------------------
@@ -103,23 +104,26 @@ def subject_page():
     user_subjects = Subject.query.filter_by(user_id=session["user_id"]).all()
     return render_template("subject.html", subjects=user_subjects)
 
-
-@app.route("/add_subject", methods=["POST"])
+@app.route("/add_subject", methods=["GET", "POST"])
 @login_required
 def add_subject():
-    name = request.form.get("name")
-    difficulty = request.form.get("difficulty")
+    if request.method == "POST":
+        name = request.form.get("name")
+        difficulty = request.form.get("difficulty")
 
-    new_subject = Subject(
-        name=name,
-        difficulty=difficulty,
-        user_id=session["user_id"]
-    )
+        new_subject = Subject(
+            user_id=session["user_id"],
+            name=name,
+            difficulty=difficulty
+        )
 
-    db.session.add(new_subject)
-    db.session.commit()
+        db.session.add(new_subject)
+        db.session.commit()
 
-    return redirect(url_for("subject_page"))
+        return redirect("/add_subject")
+
+    return render_template("add_subject.html")
+
 
 
 @app.route("/edit_subject/<int:id>", methods=["GET", "POST"])
@@ -156,25 +160,37 @@ def delete_subject(id):
 @login_required
 def session_page():
     subjects = Subject.query.filter_by(user_id=session["user_id"]).all()
-    return render_template("session.html", subjects=subjects)
+    from datetime import date
+    return render_template("session.html", subjects=subjects, today=date.today().isoformat())
 
 
-@app.route("/add_session", methods=["POST"])
+@app.route("/add_session", methods=["GET", "POST"])
 @login_required
 def add_session():
-    subject_id = request.form.get("subject_id")
-    duration = int(request.form.get("duration"))
+    subjects = Subject.query.filter_by(user_id=session["user_id"]).all()
 
-    new_session = StudySession(
-        subject_id=subject_id,
-        duration=duration,
-        user_id=session["user_id"]
-    )
+    if request.method == "POST":
+        subject_id = request.form.get("subject_id")
+        duration = int(request.form.get("duration"))
+        date_value = request.form.get("date")
 
-    db.session.add(new_session)
-    db.session.commit()
+        # Convert to real date object
+        date_obj = datetime.strptime(date_value, "%Y-%m-%d").date()
 
-    return redirect(url_for("session_page"))
+        new_session = StudySession(
+            subject_id=subject_id,
+            duration=duration,
+            date=date_obj,
+            user_id=session["user_id"]
+        )
+
+        db.session.add(new_session)
+        db.session.commit()
+
+        return redirect(url_for("summary"))
+
+    return render_template("session.html", subjects=subjects, today=date.today())
+
 
 
 @app.route("/edit_session/<int:id>", methods=["GET", "POST"])
@@ -228,7 +244,6 @@ def summary():
         total_time=total_time
     )
 
-
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -239,18 +254,30 @@ def dashboard():
 
     total_minutes = db.session.query(
         db.func.sum(StudySession.duration)
-    ).filter_by(user_id=user_id).scalar() or 0
+    ).filter(
+        StudySession.user_id == user_id
+    ).scalar() or 0
 
-    # Fetch username for display
-    user = User.query.get(user_id)
+    # TIME SPLIT
+    time_per_subject = db.session.query(
+        Subject.name,
+        db.func.sum(StudySession.duration)
+    ).join(
+        StudySession, StudySession.subject_id == Subject.id
+    ).filter(
+        Subject.user_id == user_id
+    ).group_by(
+        Subject.name
+    ).all()
 
     return render_template(
         "dashboard.html",
-        name=user.username,
-        subjects=total_subjects,
-        sessions=total_sessions,
-        minutes=total_minutes
+        total_subjects=total_subjects,
+        total_sessions=total_sessions,
+        total_minutes=total_minutes,
+        time_per_subject=time_per_subject
     )
+
 
 
 # ------------------- RUN APP -------------------

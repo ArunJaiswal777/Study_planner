@@ -1,26 +1,24 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" href="/static/style.css">
-    <title>Add Session</title>
-</head>
-<body>
-
 <h1>Add Study Session</h1>
 
 <form action="/add_session" method="POST">
-    
-    <label>Subject ID:</label>
-    <input type="number" name="subject_id" required>
+    <label>Select Subject:</label>
+    <select name="subject_id" required>
+        {% for s in subjects %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
 
-    <label>Duration (minutes):</label>
+    <label>Study Minutes:</label>
     <input type="number" name="duration" required>
+    <br><br>
+
+    <label>Date:</label>
+    <input type="date" name="date" value="{{ today }}" required>
+    <br><br>
 
     <button type="submit">Add Session</button>
 </form>
 
 <br>
-<a href="/">Home</a>
-
-</body>
-</html>
+<a href="/dashboard">Back to Dashboard</a>
