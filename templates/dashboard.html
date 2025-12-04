@@ -100,6 +100,7 @@
         <a href="/subject">Subjects</a>
         <a href="/session">Sessions</a>
         <a href="/summary">Summary</a>
+        <a href="/profile">Profile</a>
         <a href="/logout" class="logout">Logout</a>
     </div>
 </div>
@@ -138,19 +139,6 @@
 </body>
 </html>
 
-<!-- <div style="margin-top:20px;">
-    <div>Total Subjects: <b>{{ subjects }}</b></div>
-    <div>Total Study Sessions: <b>{{ sessions }}</b></div>
-    <div>Total Study Minutes: <b>{{ minutes }}</b></div>
-</div>
-
-<br><br>
-
-<a href="/subject">➕ Add Subject</a><br><br>
-<a href="/session">🕒 Add Study Session</a><br><br>
-<a href="/summary">📊 View Summary</a><br><br>
-<a href="/logout" style="color:red;">Logout</a> -->
-
 </body>
 </html>
 <h3>Time per Subject</h3>
@@ -167,3 +155,19 @@
 </tr>
 {% endfor %}
 </table>
+
+{% if goal %}
+  <h2>AI Study Goal 📌</h2>
+  <p>Exam Date: {{ goal.exam_date }}</p>
+  <p>Total Required Study Time: {{ goal.total_required_minutes }} minutes</p>
+  <p>Recommended Daily Study: {{ goal.recommended_daily_minutes }} minutes/day</p>
+
+  {% if progress_percent is not none %}
+    <p>Progress: {{ progress_percent }}% complete</p>
+  {% endif %}
+
+  <a href="/set_goal">Update Goal</a>
+{% else %}
+  <a href="/set_goal">Set Exam Goal</a>
+{% endif %}
+

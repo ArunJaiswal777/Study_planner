@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Profile</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<h1>User Profile</h1>
+<form method="POST">
+    <label>Username</label>
+    <input type="text" name="username" value="{{ user.username }}" required>
+
+    <label>Email</label>
+    <input type="email" name="email" value="{{ user.email }}">
+
+    <button type="submit">Save Changes</button>
+</form>
+
+<br>
+<a href="/dashboard">Back to Dashboard</a>
+
+</body>
+</html>
