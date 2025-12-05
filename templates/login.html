@@ -1,23 +1,22 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <h1>Login</h1>
+<!-- templates/login.html -->
+<div class="auth-wrapper">
+  <div class="card auth-card">
+    <h1 class="card-title">Welcome back 👋</h1>
+    <p class="card-subtitle">Log in to continue your study plan.</p>
 
-    <form action="/login" method="POST">
-        <label>Username:</label>
-        <input type="text" name="username" required><br><br>
+    <form method="POST" class="form">
+      <label>Username</label>
+      <input type="text" name="username" value="{{ username or '' }}" required>
 
-        <label>Password:</label>
-        <input type="password" name="password" required><br><br>
+      <label>Password</label>
+      <input type="password" name="password" required>
 
-        <button type="submit">Login</button>
+      <button type="submit" class="btn btn-primary">Login</button>
     </form>
 
-    <br>
-    <a href="/register">New user? Register</a>
-</body>
-</html>
+    <p class="auth-switch">
+      Don’t have an account?
+      <a href="{{ url_for('register') }}">Register here</a>
+    </p>
+  </div>
+</div>

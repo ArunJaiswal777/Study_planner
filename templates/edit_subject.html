@@ -1,34 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit subject</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+<!-- templates/edit_subject.html -->
+<div class="form-wrapper">
+  <div class="card">
+    <h1 class="card-title">Edit Subject</h1>
 
-<h1>Edit Subject</h1>
+    <form method="POST" class="form">
+      <label>Subject Name</label>
+      <input type="text" name="name" value="{{ subject.name }}" required>
 
-<form action="" method="POST">
-
-    <label>Subject Name:</label>
-    <input type="text" name="name" value="{{ subject.name }}" required>
-
-    <br><br>
-
-    <label>Difficulty:</label>
-    <select name="difficulty" required>
+      <label>Difficulty</label>
+      <select name="difficulty" required>
         <option value="Easy" {% if subject.difficulty == 'Easy' %}selected{% endif %}>Easy</option>
         <option value="Medium" {% if subject.difficulty == 'Medium' %}selected{% endif %}>Medium</option>
         <option value="Hard" {% if subject.difficulty == 'Hard' %}selected{% endif %}>Hard</option>
-    </select>
+      </select>
 
-    <br><br>
-
-    <button type="submit">Save Changes</button>
-</form>
-
-<br>
-<a href="/subject">Back</a>
-
-</body>
-</html>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Update</button>
+        <a href="{{ url_for('subject_page') }}" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,30 @@
+<!-- templates/edit_session.html -->
+
+<div class="form-wrapper">
+  <div class="card">
+    <h1 class="card-title">Edit Session</h1>
+
+    <form method="POST" class="form">
+      <label>Subject</label>
+      <select name="subject_id" required>
+        {% for s in subjects %}
+          <option value="{{ s.id }}" {% if s.id == session.subject_id %}selected{% endif %}>
+            {{ s.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <label>Duration (minutes)</label>
+      <input type="number" name="duration" value="{{ session.duration }}" min="1" required>
+
+      <label>Date</label>
+      <input type="date" name="date" value="{{ session.date }}" required>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Update</button>
+        <a href="{{ url_for('session_page') }}" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+

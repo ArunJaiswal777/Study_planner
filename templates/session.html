@@ -1,24 +1,63 @@
-<h1>Add Study Session</h1>
+<!-- templates/session.html -->
 
-<form action="/add_session" method="POST">
-    <label>Select Subject:</label>
-    <select name="subject_id" required>
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Study Sessions</h1>
+    <p class="page-subtitle">Track time you spend on each subject.</p>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h2 class="card-title">Add New Session</h2>
+    <form method="POST" action="{{ url_for('add_session') }}" class="form">
+      <label>Subject</label>
+      <select name="subject_id" required>
         {% for s in subjects %}
-            <option value="{{ s.id }}">{{ s.name }}</option>
+          <option value="{{ s.id }}">{{ s.name }}</option>
         {% endfor %}
-    </select>
-    <br><br>
+      </select>
 
-    <label>Study Minutes:</label>
-    <input type="number" name="duration" required>
-    <br><br>
+      <label>Duration (minutes)</label>
+      <input type="number" name="duration" min="1" required>
 
-    <label>Date:</label>
-    <input type="date" name="date" value="{{ today }}" required>
-    <br><br>
+      <label>Date</label>
+      <input type="date" name="date" value="{{ today }}" required>
 
-    <button type="submit">Add Session</button>
-</form>
+      <button type="submit" class="btn btn-primary mt-8">Save Session</button>
+    </form>
+  </div>
 
-<br>
-<a href="/dashboard">Back to Dashboard</a>
+  <div class="card">
+    <h2 class="card-title">All Sessions</h2>
+    {% if sessions %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Date</th>
+            <th>Minutes</th>
+            <th style="width:140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sessions %}
+            <tr>
+              <td>{{ s.subject.name if s.subject else 'Unknown' }}</td>
+              <td>{{ s.date }}</td>
+              <td>{{ s.duration }}</td>
+              <td>
+                <a href="{{ url_for('edit_session', sid=s.id) }}" class="table-link">Edit</a>
+                <a href="{{ url_for('delete_session', sid=s.id) }}" class="table-link text-danger" onclick="return confirm('Delete this session?');">Delete</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <p>No study sessions recorded yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>

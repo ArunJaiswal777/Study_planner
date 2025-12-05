@@ -1,25 +1,39 @@
-<h1>Your Subjects</h1>
+<!-- templates/subject.html -->
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Your Subjects</h1>
+    <p class="page-subtitle">Manage all subjects you’re preparing for.</p>
+  </div>
+  <a href="{{ url_for('add_subject') }}" class="btn btn-primary">➕ Add Subject</a>
+</div>
 
-<table border="1">
-<tr>
-  <th>Name</th>
-  <th>Difficulty</th>
-  <th>Actions</th>
-</tr>
-
-{% for s in subjects %}
-<tr>
-  <td>{{ s.name }}</td>
-  <td>{{ s.difficulty }}</td>
-  <td>
-    <a href="/edit_subject/{{ s.id }}">Edit</a> |
-    <a href="/delete_subject/{{ s.id }}" onclick="return confirm('Delete this subject?')">Delete</a>
-  </td>
-</tr>
-{% endfor %}
+{% if subjects %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Difficulty</th>
+      <th style="width: 150px;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in subjects %}
+      <tr>
+        <td>{{ s.name }}</td>
+        <td>
+          <span class="badge badge-{{ s.difficulty|lower }}">{{ s.difficulty }}</span>
+        </td>
+        <td>
+          <a href="{{ url_for('edit_subject', sid=s.id) }}" class="table-link">Edit</a>
+          <a href="{{ url_for('delete_subject', sid=s.id) }}" class="table-link text-danger" onclick="return confirm('Delete this subject?');">Delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
 </table>
-
-<br>
-<a href="/add_subject">Add New Subject</a>
-<br><br>
-<a href="/dashboard">Back to Dashboard</a>
+{% else %}
+  <div class="empty-state">
+    <p>No subjects added yet.</p>
+    <a href="{{ url_for('add_subject') }}" class="btn btn-primary">Add your first subject</a>
+  </div>
+{% endif %}

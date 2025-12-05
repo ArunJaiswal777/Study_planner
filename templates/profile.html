@@ -1,24 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Your Profile</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+<!-- templates/profile.html -->
+<div class="form-wrapper">
+  <div class="card">
+    <h1 class="card-title">Profile</h1>
+    <p class="card-subtitle">Manage your account information.</p>
 
-<h1>User Profile</h1>
-<form method="POST">
-    <label>Username</label>
-    <input type="text" name="username" value="{{ user.username }}" required>
+    <form method="POST" class="form">
+      <label>Username</label>
+      <input type="text" name="username" value="{{ user.username }}" required>
 
-    <label>Email</label>
-    <input type="email" name="email" value="{{ user.email }}">
+      <label>Email</label>
+      <input type="email" name="email" value="{{ user.email or '' }}">
 
-    <button type="submit">Save Changes</button>
-</form>
-
-<br>
-<a href="/dashboard">Back to Dashboard</a>
-
-</body>
-</html>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
