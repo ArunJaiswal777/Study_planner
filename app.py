@@ -8,8 +8,9 @@ from flask import (
     flash
 )
 from functools import wraps
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import re
+import requests
 
 from database import db
 from models.user import User
@@ -342,8 +343,9 @@ def delete_subject(sid):
 def session_page():
     user_id = session["user_id"]
     sessions = (
-        StudySession.query
-        .filter_by(user_id=user_id)
+        db.session.query(StudySession, Subject)
+        .join(Subject, StudySession.subject_id == Subject.id)
+        .filter(StudySession.user_id == user_id)
         .order_by(StudySession.date.desc())
         .all()
     )
@@ -389,7 +391,7 @@ def add_session():
 
     # GET
     today = date.today()
-    return render_template("session.html", subjects=subjects, today=today)
+    return render_template("add_session.html", subjects=subjects, today=today)
 
 
 @app.route("/edit_session/<int:sid>", methods=["GET", "POST"])
@@ -433,7 +435,7 @@ def edit_session(sid):
         return redirect(url_for("session_page"))
 
     return render_template("edit_session.html",
-                           session=session_obj,
+                           study_session=session_obj,
                            subjects=subjects)
 
 
@@ -464,20 +466,233 @@ def summary():
     sessions = StudySession.query.filter_by(user_id=user_id).all()
 
     detailed_sessions = []
+    subject_breakdown = {}
+    
     for s in sessions:
         subject = Subject.query.get(s.subject_id)
+        name = subject.name if subject else "Unknown"
+        
+        # List Details
         detailed_sessions.append({
-            "subject_name": subject.name if subject else "Unknown",
+            "subject_name": name,
             "duration": s.duration
         })
+        
+        # Aggregation
+        if name in subject_breakdown:
+            subject_breakdown[name] += s.duration
+        else:
+            subject_breakdown[name] = s.duration
 
-    total_time = sum(s["duration"] for s in detailed_sessions)
+    total_time = sum(s.duration for s in sessions)
 
     return render_template(
         "summary.html",
         subjects=subjects,
         sessions=detailed_sessions,
-        total_time=total_time
+        total_minutes=total_time,
+        subject_breakdown=subject_breakdown
+    )
+
+
+@app.route("/assistant")
+@login_required
+def assistant():
+    # Pass 'session' to template by default in Flask, 
+    # but explicitly ensuring user context is fine too.
+    return render_template("assistant.html")
+
+
+@app.route("/api/chat", methods=["POST"])
+@login_required
+def api_chat():
+    data = request.json
+    user_message = data.get("message", "")
+    api_key = data.get("api_key", "")
+
+    if not api_key:
+        return {"reply": "Please provide a valid API Key."}
+    
+    # Call Groq API
+    try:
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "llama-3.3-70b-versatile",
+            "messages": [
+                {"role": "system", "content": "You are a helpful AI study assistant. Help the user with their study plans, subjects, and timetables. Keep answers concise and motivating."},
+                {"role": "user", "content": user_message}
+            ]
+        }
+        
+        response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers)
+        
+        if response.status_code == 200:
+            result = response.json()
+            reply = result["choices"][0]["message"]["content"]
+        else:
+            reply = f"Error from AI provider: {response.text}"
+            
+    except Exception as e:
+        reply = f"An error occurred: {str(e)}"
+        
+    return {"reply": reply}
+
+
+# -------------------------------------------------
+# TIMETABLE
+# -------------------------------------------------
+def generate_algorithm(user_id, daily_minutes):
+    """
+    Rule-based generator for study timetable.
+    """
+    subjects = Subject.query.filter_by(user_id=user_id).all()
+    sessions = StudySession.query.filter_by(user_id=user_id).all()
+    goal = StudyGoal.query.filter_by(user_id=user_id).first()
+
+    # 1. Configuration
+    # ALIGNMENT: Match the heavy weights from calculate_study_goal
+    # Easy=20h, Medium=35h, Hard=50h
+    weights = {"Easy": 20, "Medium": 35, "Hard": 50}
+    base_minutes = 60 # Convert hours to minutes
+    
+    # Defaults
+    days_to_plan = 7
+    if goal:
+        days_left = (goal.exam_date - date.today()).days
+        if days_left > 0:
+            # Plan for the realistic remaining time, up to 30 days for display
+            days_to_plan = min(days_left, 30) 
+
+    # 2. Calculate State per Subject
+    subject_data = []
+    total_remaining_work = 0
+    
+    for s in subjects:
+        # Calculate requirement in minutes based on difficulty
+        req = weights.get(s.difficulty, 20) * base_minutes
+        studied = sum(sess.duration for sess in sessions if sess.subject_id == s.id)
+        rem = max(0, req - studied)
+        
+        subject_data.append({
+            "id": s.id,
+            "name": s.name,
+            "difficulty": s.difficulty,
+            "remaining": rem
+        })
+        total_remaining_work += rem
+        
+    # 3. Generate Daily Plan
+    schedule = []
+    insight = "You are on track! Keep it up."
+    
+    if total_remaining_work > (daily_minutes * days_to_plan):
+        insight = "You are behind schedule. Consider increasing your daily study time or focusing on Hard subjects."
+    
+    # We will simulate the days
+    # To rotate, we shuffle or just iterate cyclically
+    # Let's filter only subjects that need work
+    active_subjects = [s for s in subject_data if s["remaining"] > 0]
+    
+    import random
+    # We sort them by difficulty desc initially to prioritize hard ones? 
+    # Or just keep order. Let's keep order.
+    
+    if not active_subjects:
+         return [], "All subjects completed based on base requirements!"
+
+    current_idx = 0
+    
+    for day_num in range(1, days_to_plan + 1):
+        # Every 7th day is Revision
+        if day_num % 7 == 0:
+            schedule.append({
+                "day": day_num,
+                "type": "Revision",
+                "subjects": [],
+                "note": "Review notes and flashcards for all subjects."
+            })
+            continue
+
+        # Valid Study Day
+        # Pick 2 subjects to focus on (Rotation)
+        day_subjects = []
+        
+        # We try to fill 'daily_minutes'
+        time_filled = 0
+        
+        # Strategy: Pick 2 distinct subjects from the list cyclically
+        # We use a while loop to fill time? No, simpler to just pick 2.
+        
+        todays_picks = []
+        for _ in range(2): # Pick 2
+             subj = active_subjects[current_idx % len(active_subjects)]
+             if subj not in todays_picks:
+                 todays_picks.append(subj)
+             current_idx += 1
+        
+        # Allocate time proportionally between these 2
+        subset_rem = sum(p["remaining"] for p in todays_picks)
+        
+        allocated_today = 0
+        for i, s in enumerate(todays_picks):
+            # If it's the last one, give remainder of daily_minutes
+            if i == len(todays_picks) - 1:
+                mins = daily_minutes - allocated_today
+            else:
+                # Proportional to remaining
+                if subset_rem > 0:
+                    ratio = s["remaining"] / subset_rem
+                    mins = int(daily_minutes * ratio)
+                else:
+                    mins = int(daily_minutes / len(todays_picks))
+            
+            # Sanity check
+            if mins <= 5: mins = 15 # Minimum meaningful slot
+            
+            day_subjects.append({
+                "name": s["name"],
+                "time": mins,
+                "difficulty": s["difficulty"]
+            })
+            
+            # Update simulation state (so future days see less remaining)
+            # Find the actual object in active_subjects to mutate
+            for original in active_subjects:
+                if original["id"] == s["id"]:
+                    original["remaining"] = max(0, original["remaining"] - mins)
+            
+            allocated_today += mins
+            
+        schedule.append({
+            "day": day_num,
+            "type": "Study",
+            "subjects": day_subjects
+        })
+        
+    return schedule, insight
+
+
+@app.route("/timetable", methods=["GET", "POST"])
+@login_required
+def timetable():
+    default_daily = 120 # 2 hours
+    
+    if request.method == "POST":
+        try:
+            default_daily = int(request.form.get("daily_time", 120))
+        except ValueError:
+            pass
+    
+    schedule_data, insight = generate_algorithm(session["user_id"], default_daily)
+    
+    return render_template(
+        "timetable.html", 
+        schedule=schedule_data, 
+        insight=insight,
+        daily_minutes=default_daily
     )
 
 

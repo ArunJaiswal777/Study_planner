@@ -1,23 +1,48 @@
-<!-- templates/edit_subject.html -->
-<div class="form-wrapper">
-  <div class="card">
-    <h1 class="card-title">Edit Subject</h1>
+<!DOCTYPE html>
+<html lang="en">
 
-    <form method="POST" class="form">
-      <label>Subject Name</label>
-      <input type="text" name="name" value="{{ subject.name }}" required>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Subject - AI Study Planner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='saas-theme.css') }}">
+</head>
 
-      <label>Difficulty</label>
-      <select name="difficulty" required>
-        <option value="Easy" {% if subject.difficulty == 'Easy' %}selected{% endif %}>Easy</option>
-        <option value="Medium" {% if subject.difficulty == 'Medium' %}selected{% endif %}>Medium</option>
-        <option value="Hard" {% if subject.difficulty == 'Hard' %}selected{% endif %}>Hard</option>
-      </select>
+<body>
 
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Update</button>
-        <a href="{{ url_for('subject_page') }}" class="btn btn-outline">Cancel</a>
+  <div class="auth-container">
+    <div class="card auth-card glass-card">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 700;">Edit Subject</h2>
+        <p class="text-muted text-sm">Update course details.</p>
       </div>
-    </form>
+
+      <form method="POST" action="{{ url_for('edit_subject', sid=subject.id) }}">
+        <div class="form-group">
+          <label for="name" class="form-label">Subject Name</label>
+          <input type="text" id="name" name="name" class="form-input" value="{{ subject.name }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="difficulty" class="form-label">Difficulty Level</label>
+          <div style="position: relative;">
+            <select id="difficulty" name="difficulty" class="form-input"
+              style="appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem center; background-size: 0.65em auto;">
+              <option value="Easy" {% if subject.difficulty=='Easy' %}selected{% endif %}>Easy (Green)</option>
+              <option value="Medium" {% if subject.difficulty=='Medium' %}selected{% endif %}>Medium (Yellow)</option>
+              <option value="Hard" {% if subject.difficulty=='Hard' %}selected{% endif %}>Hard (Red)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-4" style="margin-top: 2rem;">
+          <a href="{{ url_for('subject_page') }}" class="btn btn-secondary" style="flex: 1;">Cancel</a>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Update Subject</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
+
+</body>
+
+</html>

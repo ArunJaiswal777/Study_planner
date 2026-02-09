@@ -1,28 +1,76 @@
-<!-- templates/register.html -->
-<div class="auth-wrapper">
-  <div class="card auth-card">
-    <h1 class="card-title">Create an account ✨</h1>
-    <p class="card-subtitle">Start planning your study schedule smarter.</p>
+<!DOCTYPE html>
+<html lang="en">
 
-    <form method="POST" class="form">
-      <label>Username</label>
-      <input type="text" name="username" value="{{ username or '' }}" required>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account - AI Study Planner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='saas-theme.css') }}">
+</head>
 
-      <label>Email (optional)</label>
-      <input type="email" name="email" value="{{ email or '' }}">
+<body>
 
-      <label>Password</label>
-      <input type="password" name="password" required>
+  <div class="auth-container">
+    <div class="card auth-card glass-card">
+      <div class="text-center" style="margin-bottom: 2rem;">
+        <h1 class="logo-text">AI Study Planner</h1>
+        <p class="text-muted text-sm" style="margin-top: 0.5rem;">Start your smart learning journey today.</p>
+      </div>
 
-      <label>Confirm Password</label>
-      <input type="password" name="confirm_password" required>
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="{{ 'alert-error' if category == 'error' else 'alert-success' }}">
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
 
-      <button type="submit" class="btn btn-primary">Register</button>
-    </form>
+      <form method="POST" action="{{ url_for('register') }}">
+        <div class="form-group">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" id="username" name="username" class="form-input" placeholder="Arun" required>
+        </div>
 
-    <p class="auth-switch">
-      Already have an account?
-      <a href="{{ url_for('login') }}">Login here</a>
-    </p>
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+          <!-- Password Rules Bubbles -->
+          <div class="flex gap-2" style="margin-top: 0.5rem; flex-wrap: wrap;">
+            <span class="text-xs"
+              style="padding: 2px 8px; background: #e2e8f0; border-radius: 12px; color: #64748b;">Min 8 chars</span>
+            <span class="text-xs" style="padding: 2px 8px; background: #e2e8f0; border-radius: 12px; color: #64748b;">1
+              number</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password" class="form-label">Confirm Password</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="••••••••"
+            required>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+        </div>
+      </form>
+
+      <div class="text-center" style="margin-top: 1.5rem;">
+        <p class="text-sm text-muted">
+          Already have an account?
+          <a href="{{ url_for('login') }}" class="font-medium">Sign in</a>
+        </p>
+      </div>
+    </div>
   </div>
-</div>
+
+</body>
+
+</html>

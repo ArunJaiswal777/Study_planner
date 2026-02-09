@@ -1,34 +1,185 @@
-<!-- templates/summary.html -->
-<h1 class="page-title">Study Summary</h1>
-<p class="page-subtitle">Overview of your total study time by subject and session.</p>
+<!DOCTYPE html>
+<html lang="en">
 
-<div class="card">
-  <h2 class="card-title">Totals</h2>
-  <p><strong>Total Study Time:</strong> {{ total_time }} minutes</p>
-</div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - AI Study Planner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='saas-theme.css') }}">
+  <style>
+    /* Shared Dashboard Layout */
+    .layout-container {
+      display: flex;
+      min-height: 100vh;
+    }
 
-<div class="card mt-16">
-  <h2 class="card-title">Sessions</h2>
-  {% if sessions %}
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Subject</th>
-          <th>Minutes</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in sessions %}
-          <tr>
-            <td>{{ s.subject_name }}</td>
-            <td>{{ s.duration }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <div class="empty-state">
-      <p>No sessions yet.</p>
-    </div>
-  {% endif %}
-</div>
+    .sidebar {
+      width: 260px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-light);
+      padding: var(--sp-6) var(--sp-4);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: var(--sp-8);
+      max-width: 1400px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: var(--sp-3) var(--sp-4);
+      color: var(--text-muted);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--sp-1);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background-color: #f1f5f9;
+      color: var(--primary-color);
+    }
+
+    .nav-icon {
+      margin-right: var(--sp-3);
+      font-size: 1.1rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--sp-6);
+    }
+
+    .summary-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-xl);
+      padding: var(--sp-6);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .subject-breakdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--sp-4) 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .subject-breakdown-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="layout-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div style="padding: 0 var(--sp-2) var(--sp-8);">
+        <h2 class="logo-text" style="font-size: 1.25rem;">AI Study Planner</h2>
+      </div>
+      <nav class="flex-col flex gap-2">
+        <a href="{{ url_for('dashboard') }}" class="nav-item">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="{{ url_for('subject_page') }}" class="nav-item">
+          <span class="nav-icon">📚</span> Subjects
+        </a>
+        <a href="{{ url_for('session_page') }}" class="nav-item">
+          <span class="nav-icon">⏱️</span> Study Sessions
+        </a>
+        <a href="{{ url_for('summary') }}" class="nav-item active">
+          <span class="nav-icon">📈</span> Analytics
+        </a>
+        <a href="{{ url_for('timetable') }}" class="nav-item">
+          <span class="nav-icon">📅</span> Timetable
+        </a>
+        <a href="{{ url_for('set_goal') }}" class="nav-item">
+          <span class="nav-icon">🎯</span> Exam Goal
+        </a>
+        <a href="{{ url_for('assistant') }}" class="nav-item"><span class="nav-icon">✨</span> AI Assistant</a>
+      </nav>
+      <div style="margin-top: auto; padding-top: var(--sp-4); border-top: 1px solid var(--border-light);">
+        <a href="{{ url_for('logout') }}" class="nav-item" style="color: #ef4444;">
+          <span class="nav-icon">🚪</span> Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="section-header">
+        <div>
+          <h1 style="font-size: 1.8rem; font-weight: 700;">Performance Summary</h1>
+          <p class="text-muted">Analyze your study patterns.</p>
+        </div>
+      </header>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-6);">
+
+        <!-- Quick Stats -->
+        <div class="summary-card">
+          <h3 class="font-bold" style="margin-bottom: var(--sp-4);">Overview</h3>
+          <div style="text-align: center; padding: 2rem 0;">
+            <div class="text-muted text-sm font-medium uppercase tracking-wider">Total Study Time</div>
+            <div style="font-size: 4rem; font-weight: 800; color: var(--primary-color); line-height: 1;">
+              {{ total_minutes }}<span style="font-size: 1.5rem; color: var(--text-muted);">min</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Placeholders for Charts -->
+        <div class="summary-card glass-card"
+          style="display: flex; align-items: center; justify-content: center; min-height: 200px;">
+          <div class="text-center text-muted">
+            <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">📊</span>
+            <p>Visual Charts Coming Soon</p>
+          </div>
+        </div>
+
+        <!-- Subject Breakdown -->
+        <div class="summary-card" style="grid-column: span 2;">
+          <h3 class="font-bold" style="margin-bottom: var(--sp-4);">Subject Breakdown</h3>
+
+          {% for subject, minutes in subject_breakdown.items() %}
+          <div class="subject-breakdown-item">
+            <div>
+              <div class="font-medium">{{ subject }}</div>
+              <!-- Optional progress bar visual -->
+              <div style="width: 200px; height: 4px; background: #f1f5f9; border-radius: 4px; margin-top: 6px;">
+                <div
+                  style="height: 100%; width: {{ (minutes / total_minutes * 100) if total_minutes > 0 else 0 }}%; background: var(--primary-gradient); border-radius: 4px;">
+                </div>
+              </div>
+            </div>
+            <div class="font-bold">{{ minutes }} min</div>
+          </div>
+          {% else %}
+          <div class="text-center text-muted" style="padding: 2rem;">No data available.</div>
+          {% endfor %}
+        </div>
+
+      </div>
+
+      <div style="margin-top: var(--sp-8); text-align: center;">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+
+</html>

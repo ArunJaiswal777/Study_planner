@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Study Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='saas-theme.css') }}">
+    <style>
+        /* Reuse Layout */
+        .layout-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-light);
+            padding: var(--sp-6) var(--sp-4);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: var(--sp-8);
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: var(--sp-3) var(--sp-4);
+            color: var(--text-muted);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--sp-1);
+            font-weight: 500;
+            font-size: 0.95rem;
+            text-decoration: none;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        .nav-icon {
+            margin-right: var(--sp-3);
+            font-size: 1.1rem;
+        }
+
+        /* Chat Specific Styles */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .chat-header {
+            padding: var(--sp-4) var(--sp-6);
+            border-bottom: 1px solid var(--border-light);
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: var(--sp-6);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-4);
+            background: #fff;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: var(--sp-3) var(--sp-4);
+            border-radius: var(--radius-lg);
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: #f1f5f9;
+            color: var(--text-body);
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-input-area {
+            padding: var(--sp-4);
+            background: #fff;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: var(--sp-2);
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: var(--sp-3);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .send-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 var(--sp-6);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-dark, #4f46e5);
+        }
+
+        .typing-indicator {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-left: var(--sp-2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .typing-indicator.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div style="padding: 0 var(--sp-2) var(--sp-8);">
+                <h2 class="logo-text" style="font-size: 1.25rem;">AI Study Planner</h2>
+            </div>
+
+            <nav class="flex-col flex gap-2">
+                <a href="{{ url_for('dashboard') }}" class="nav-item">
+                    <span class="nav-icon">📊</span> Dashboard
+                </a>
+                <a href="{{ url_for('subject_page') }}" class="nav-item">
+                    <span class="nav-icon">📚</span> Subjects
+                </a>
+                <a href="{{ url_for('session_page') }}" class="nav-item">
+                    <span class="nav-icon">⏱️</span> Study Sessions
+                </a>
+                <a href="{{ url_for('summary') }}" class="nav-item">
+                    <span class="nav-icon">📈</span> Analytics
+                </a>
+                <a href="{{ url_for('timetable') }}" class="nav-item">
+                    <span class="nav-icon">📅</span> Timetable
+                </a>
+                <a href="{{ url_for('set_goal') }}" class="nav-item">
+                    <span class="nav-icon">🎯</span> Exam Goal
+                </a>
+                <a href="{{ url_for('assistant') }}" class="nav-item active">
+                    <span class="nav-icon">✨</span> AI Assistant
+                </a>
+            </nav>
+
+            <div style="margin-top: auto; padding-top: var(--sp-4); border-top: 1px solid var(--border-light);">
+                <div class="flex items-center gap-2" style="padding: 0 var(--sp-2);">
+                    <div style="width: 32px; height: 32px; background: var(--primary-gradient); border-radius: 50%;">
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold">{{ session['user'] }}</div>
+                        <div class="text-xs text-muted">Student</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="nav-item" style="margin-top: var(--sp-4); color: #ef4444;">
+                    <span class="nav-icon">🚪</span> Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header style="margin-bottom: var(--sp-6);">
+                <h1 style="font-size: 1.8rem; font-weight: 700;">AI Study Assistant</h1>
+                <p class="text-muted">Ask questions about your subjects, schedule, or study tips.</p>
+            </header>
+
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="font-bold">Chat Session</div>
+                    <div class="flex items-center gap-2">
+                        <div style="position: relative; display: inline-block;">
+                            <input type="password" id="apiKeyInput" placeholder="Enter Groq API Key"
+                                style="padding: 4px 8px; border: 1px solid var(--border-light); border-radius: 4px; font-size: 0.85rem; width: 200px;">
+                            <button onclick="saveApiKey()" title="Save Key"
+                                style="background: none; border: none; cursor: pointer; font-size: 1rem;">💾</button>
+                        </div>
+                        <button onclick="clearChat()" class="text-sm text-muted"
+                            style="background:none; border:none; cursor:pointer;">Clear</button>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot">
+                        Hello! I'm your AI Study Assistant. Please enter your Groq API Key above to start chatting! 🤖
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">AI is typing...</div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" class="chat-input" placeholder="Type your question..."
+                        onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+
+        // Load API Key on start
+        window.onload = function () {
+            const savedKey = localStorage.getItem('groqApiKey');
+            if (savedKey) {
+                apiKeyInput.value = savedKey;
+            }
+        }
+
+        function saveApiKey() {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('groqApiKey', key);
+                alert("API Key saved locally!");
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            const apiKey = apiKeyInput.value.trim();
+
+            if (!text) return;
+
+            if (!apiKey) {
+                alert("Please enter your Groq API Key first!");
+                return;
+            }
+
+            // Add user message
+            addMessage(text, 'user');
+            userInput.value = '';
+            scrollToBottom();
+
+            // Show typing
+            typingIndicator.classList.add('visible');
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: text,
+                        api_key: apiKey
+                    }),
+                });
+
+                const data = await response.json();
+
+                // Hide typing
+                typingIndicator.classList.remove('visible');
+
+                // Add bot message
+                addMessage(data.reply, 'bot');
+                scrollToBottom();
+
+            } catch (error) {
+                console.error('Error:', error);
+                typingIndicator.classList.remove('visible');
+                addMessage("Sorry, I'm having trouble connecting right now.", 'bot');
+            }
+        }
+
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            div.textContent = text;
+            chatMessages.appendChild(div);
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function clearChat() {
+            chatMessages.innerHTML = `
+        <div class="message bot">
+            Chat cleared. How can I help?
+        </div>
+      `;
+        }
+    </script>
+</body>
+
+</html>

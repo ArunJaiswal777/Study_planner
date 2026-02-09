@@ -1,63 +1,203 @@
-<!-- templates/session.html -->
+<!DOCTYPE html>
+<html lang="en">
 
-<div class="page-header-row">
-  <div>
-    <h1 class="page-title">Study Sessions</h1>
-    <p class="page-subtitle">Track time you spend on each subject.</p>
-  </div>
-</div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Sessions - AI Study Planner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='saas-theme.css') }}">
+  <style>
+    /* Shared Dashboard Layout */
+    .layout-container {
+      display: flex;
+      min-height: 100vh;
+    }
 
-<div class="grid-2">
-  <div class="card">
-    <h2 class="card-title">Add New Session</h2>
-    <form method="POST" action="{{ url_for('add_session') }}" class="form">
-      <label>Subject</label>
-      <select name="subject_id" required>
-        {% for s in subjects %}
-          <option value="{{ s.id }}">{{ s.name }}</option>
-        {% endfor %}
-      </select>
+    .sidebar {
+      width: 260px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-light);
+      padding: var(--sp-6) var(--sp-4);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
 
-      <label>Duration (minutes)</label>
-      <input type="number" name="duration" min="1" required>
+    .main-content {
+      flex: 1;
+      padding: var(--sp-8);
+      max-width: 1400px;
+    }
 
-      <label>Date</label>
-      <input type="date" name="date" value="{{ today }}" required>
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: var(--sp-3) var(--sp-4);
+      color: var(--text-muted);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--sp-1);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
 
-      <button type="submit" class="btn btn-primary mt-8">Save Session</button>
-    </form>
-  </div>
+    .nav-item:hover,
+    .nav-item.active {
+      background-color: #f1f5f9;
+      color: var(--primary-color);
+    }
 
-  <div class="card">
-    <h2 class="card-title">All Sessions</h2>
-    {% if sessions %}
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Subject</th>
-            <th>Date</th>
-            <th>Minutes</th>
-            <th style="width:140px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in sessions %}
+    .nav-icon {
+      margin-right: var(--sp-3);
+      font-size: 1.1rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--sp-6);
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f8fafc;
+      padding: var(--sp-4);
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    td {
+      padding: var(--sp-4);
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-main);
+      font-size: 0.95rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: rgba(248, 250, 252, 0.5);
+    }
+
+    .action-link {
+      font-size: 0.875rem;
+      margin-right: var(--sp-4);
+      font-weight: 500;
+    }
+
+    .action-link.delete {
+      color: #ef4444;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="layout-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div style="padding: 0 var(--sp-2) var(--sp-8);">
+        <h2 class="logo-text" style="font-size: 1.25rem;">AI Study Planner</h2>
+      </div>
+      <nav class="flex-col flex gap-2">
+        <a href="{{ url_for('dashboard') }}" class="nav-item">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="{{ url_for('subject_page') }}" class="nav-item">
+          <span class="nav-icon">📚</span> Subjects
+        </a>
+        <a href="{{ url_for('session_page') }}" class="nav-item active">
+          <span class="nav-icon">⏱️</span> Study Sessions
+        </a>
+        <a href="{{ url_for('summary') }}" class="nav-item">
+          <span class="nav-icon">📈</span> Analytics
+        </a>
+        <a href="{{ url_for('timetable') }}" class="nav-item">
+          <span class="nav-icon">📅</span> Timetable
+        </a>
+        <a href="{{ url_for('set_goal') }}" class="nav-item">
+          <span class="nav-icon">🎯</span> Exam Goal
+        </a>
+        <a href="{{ url_for('assistant') }}" class="nav-item"><span class="nav-icon">✨</span> AI Assistant</a>
+      </nav>
+      <div style="margin-top: auto; padding-top: var(--sp-4); border-top: 1px solid var(--border-light);">
+        <a href="{{ url_for('logout') }}" class="nav-item" style="color: #ef4444;">
+          <span class="nav-icon">🚪</span> Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="section-header">
+        <div>
+          <h1 style="font-size: 1.8rem; font-weight: 700;">Study History</h1>
+          <p class="text-muted">Track all your study sessions here.</p>
+        </div>
+        <a href="{{ url_for('add_session') }}" class="btn btn-primary">+ Log Session</a>
+      </header>
+
+      <div class="table-container">
+        <table>
+          <thead>
             <tr>
-              <td>{{ s.subject.name if s.subject else 'Unknown' }}</td>
-              <td>{{ s.date }}</td>
-              <td>{{ s.duration }}</td>
+              <th>Subject</th>
+              <th>Date</th>
+              <th>Duration</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for session, subject in sessions %}
+            <tr>
+              <td class="font-medium">{{ subject.name }}</td>
+              <td class="text-muted">{{ session.date }}</td>
               <td>
-                <a href="{{ url_for('edit_session', sid=s.id) }}" class="table-link">Edit</a>
-                <a href="{{ url_for('delete_session', sid=s.id) }}" class="table-link text-danger" onclick="return confirm('Delete this session?');">Delete</a>
+                <span style="font-feature-settings: 'tnum'; font-weight: 500;">
+                  {{ session.duration }} min
+                </span>
+              </td>
+              <td>
+                <a href="{{ url_for('edit_session', sid=session.id) }}" class="action-link">Edit</a>
+                <a href="{{ url_for('delete_session', sid=session.id) }}" class="action-link delete"
+                  onclick="return confirm('Are you sure?')">Delete</a>
               </td>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <div class="empty-state">
-        <p>No study sessions recorded yet.</p>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center text-muted" style="padding: 3rem;">
+                No study sessions logged yet. <a href="{{ url_for('add_session') }}">Log your first one</a>.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-    {% endif %}
+    </main>
   </div>
-</div>
+
+</body>
+
+</html>

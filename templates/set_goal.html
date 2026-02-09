@@ -1,23 +1,72 @@
-<!-- templates/set_goal.html -->
-<div class="form-wrapper">
-  <div class="card">
-    <h1 class="card-title">Set Exam Goal</h1>
-    <p class="card-subtitle">Choose your exam date to let the planner calculate total required study time.</p>
+<!DOCTYPE html>
+<html lang="en">
 
-    {% if subjects and subjects|length == 0 %}
-      <div class="empty-state">
-        <p>Add at least one subject before setting a goal.</p>
-        <a href="{{ url_for('add_subject') }}" class="btn btn-primary">Add Subject</a>
-      </div>
-    {% endif %}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set Exam Goal - AI Study Planner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='saas-theme.css') }}">
+</head>
 
-    <form method="POST" class="form">
-      <label>Exam Date</label>
-      <input type="date" name="exam_date" required>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Calculate Goal</button>
-        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Cancel</a>
+<body>
+
+  <div class="auth-container">
+    <div class="card auth-card glass-card" style="max-width: 500px;">
+      <div style="margin-bottom: 2rem; text-align: center;">
+        <h2 style="font-size: 1.5rem; font-weight: 700;">Set Exam Goal 🎯</h2>
+        <p class="text-muted text-sm">Target a completion date to get recommendations.</p>
       </div>
-    </form>
+
+      <form method="POST" action="{{ url_for('set_goal') }}">
+        <div class="form-group">
+          <label for="exam_date" class="form-label">When is your exam?</label>
+          <input type="date" id="exam_date" name="exam_date" class="form-input" required>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary btn-full">Compute Study Plan</button>
+        </div>
+      </form>
+
+      {% if goal_date %}
+      <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-light);">
+        <h3 class="font-bold text-center" style="margin-bottom: 1rem;">Your AI Prediction</h3>
+
+        <div class="flex flex-col gap-4">
+          <div
+            style="background: #f8fafc; padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between;">
+            <span class="text-muted">Target Date</span>
+            <span class="font-bold">{{ goal_date }}</span>
+          </div>
+
+          <div style="background: #fefce8; border: 1px solid #fef08a; padding: 1rem; border-radius: var(--radius-md);">
+            <div class="text-xs text-muted uppercase font-bold text-center" style="color: #854d0e;">Required To Finish
+            </div>
+            <div class="text-center" style="font-size: 1.5rem; font-weight: 800; color: #854d0e; margin: 0.5rem 0;">
+              {{ required_minutes }} mins
+            </div>
+            <div class="text-xs text-center" style="color: #a16207;">Total for all subjects</div>
+          </div>
+
+          <div style="background: #eff6ff; border: 1px solid #dbeafe; padding: 1rem; border-radius: var(--radius-md);">
+            <div class="text-xs text-muted uppercase font-bold text-center" style="color: #1e40af;">Daily Recommendation
+            </div>
+            <div class="text-center" style="font-size: 1.5rem; font-weight: 800; color: #1e40af; margin: 0.5rem 0;">
+              {{ daily_minutes }} mins/day
+            </div>
+            <div class="text-xs text-center" style="color: #1d4ed8;">To finish by test day</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="text-center" style="margin-top: 2rem;">
+        <a href="{{ url_for('dashboard') }}" class="text-sm font-medium text-muted hover:text-primary">Back to
+          Dashboard</a>
+      </div>
+    </div>
   </div>
-</div>
+
+</body>
+
+</html>

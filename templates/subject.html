@@ -1,39 +1,235 @@
-<!-- templates/subject.html -->
-<div class="page-header-row">
-  <div>
-    <h1 class="page-title">Your Subjects</h1>
-    <p class="page-subtitle">Manage all subjects you’re preparing for.</p>
-  </div>
-  <a href="{{ url_for('add_subject') }}" class="btn btn-primary">➕ Add Subject</a>
-</div>
+<!DOCTYPE html>
+<html lang="en">
 
-{% if subjects %}
-<table class="data-table">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Difficulty</th>
-      <th style="width: 150px;">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for s in subjects %}
-      <tr>
-        <td>{{ s.name }}</td>
-        <td>
-          <span class="badge badge-{{ s.difficulty|lower }}">{{ s.difficulty }}</span>
-        </td>
-        <td>
-          <a href="{{ url_for('edit_subject', sid=s.id) }}" class="table-link">Edit</a>
-          <a href="{{ url_for('delete_subject', sid=s.id) }}" class="table-link text-danger" onclick="return confirm('Delete this subject?');">Delete</a>
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-  <div class="empty-state">
-    <p>No subjects added yet.</p>
-    <a href="{{ url_for('add_subject') }}" class="btn btn-primary">Add your first subject</a>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subjects - AI Study Planner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='saas-theme.css') }}">
+  <style>
+    /* Shared Dashboard Layout (Duplicated for independence as requested) */
+    .layout-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-light);
+      padding: var(--sp-6) var(--sp-4);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: var(--sp-8);
+      max-width: 1400px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: var(--sp-3) var(--sp-4);
+      color: var(--text-muted);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--sp-1);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background-color: #f1f5f9;
+      color: var(--primary-color);
+    }
+
+    .nav-icon {
+      margin-right: var(--sp-3);
+      font-size: 1.1rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--sp-6);
+    }
+
+    /* Table Styles */
+    .table-container {
+      overflow-x: auto;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f8fafc;
+      padding: var(--sp-4);
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    td {
+      padding: var(--sp-4);
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-main);
+      font-size: 0.95rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: rgba(248, 250, 252, 0.5);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-easy {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-medium {
+      background-color: #fef9c3;
+      color: #854d0e;
+    }
+
+    .badge-hard {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    .action-link {
+      font-size: 0.875rem;
+      margin-right: var(--sp-4);
+      font-weight: 500;
+    }
+
+    .action-link.delete {
+      color: #ef4444;
+    }
+
+    .action-link.delete:hover {
+      color: #b91c1c;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="layout-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div style="padding: 0 var(--sp-2) var(--sp-8);">
+        <h2 class="logo-text" style="font-size: 1.25rem;">AI Study Planner</h2>
+      </div>
+      <nav class="flex-col flex gap-2">
+        <a href="{{ url_for('dashboard') }}" class="nav-item">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="{{ url_for('subject_page') }}" class="nav-item active">
+          <span class="nav-icon">📚</span> Subjects
+        </a>
+        <a href="{{ url_for('session_page') }}" class="nav-item">
+          <span class="nav-icon">⏱️</span> Study Sessions
+        </a>
+        <a href="{{ url_for('summary') }}" class="nav-item">
+          <span class="nav-icon">📈</span> Analytics
+        </a>
+        <a href="{{ url_for('timetable') }}" class="nav-item">
+          <span class="nav-icon">📅</span> Timetable
+        </a>
+        <a href="{{ url_for('set_goal') }}" class="nav-item">
+          <span class="nav-icon">🎯</span> Exam Goal
+        </a>
+        <a href="{{ url_for('assistant') }}" class="nav-item"><span class="nav-icon">✨</span> AI Assistant</a>
+      </nav>
+      <div style="margin-top: auto; padding-top: var(--sp-4); border-top: 1px solid var(--border-light);">
+        <a href="{{ url_for('logout') }}" class="nav-item" style="color: #ef4444;">
+          <span class="nav-icon">🚪</span> Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="section-header">
+        <div>
+          <h1 style="font-size: 1.8rem; font-weight: 700;">Subjects</h1>
+          <p class="text-muted">Manage your courses and difficulty levels.</p>
+        </div>
+        <a href="{{ url_for('add_subject') }}" class="btn btn-primary">+ Add New Subject</a>
+      </header>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Subject Name</th>
+              <th>Difficulty</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for subject in subjects %}
+            <tr>
+              <td class="font-medium">{{ subject.name }}</td>
+              <td>
+                {% if subject.difficulty == 'Easy' %}
+                <span class="badge badge-easy">Easy</span>
+                {% elif subject.difficulty == 'Medium' %}
+                <span class="badge badge-medium">Medium</span>
+                {% else %}
+                <span class="badge badge-hard">Hard</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('edit_subject', sid=subject.id) }}" class="action-link">Edit</a>
+                <a href="{{ url_for('delete_subject', sid=subject.id) }}" class="action-link delete"
+                  onclick="return confirm('Are you sure?')">Delete</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center text-muted" style="padding: 3rem;">
+                No subjects found. <a href="{{ url_for('add_subject') }}">Add one now</a>.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
   </div>
-{% endif %}
+
+</body>
+
+</html>
