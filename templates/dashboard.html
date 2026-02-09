@@ -246,7 +246,7 @@
             <span>{{ total_minutes }} / {{ goal_minutes }} m</span>
           </div>
           {% set progress_width = percent if percent < 100 else 100 %} <div class="progress-bg">
-            <div class="progress-fill" style="width: {{ progress_width }}%;"></div>
+            <div class="progress-fill" style="width:  progress_width "></div>
         </div>
         {% if percent >= 100 %}
         <div
