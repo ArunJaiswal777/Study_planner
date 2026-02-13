@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streak History - AI Study Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='saas-theme.css') }}">
+    <style>
+        /* Shared Dashboard Layout */
+        .layout-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-light);
+            padding: var(--sp-6) var(--sp-4);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: var(--sp-8);
+            max-width: 1400px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: var(--sp-3) var(--sp-4);
+            color: var(--text-muted);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--sp-1);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        .nav-icon {
+            margin-right: var(--sp-3);
+            font-size: 1.1rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--sp-6);
+        }
+
+        /* Streak Specific Styles */
+        .calendar-container {
+            background: var(--bg-surface);
+            border-radius: var(--radius-xl);
+            padding: var(--sp-8);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: var(--sp-4);
+            text-align: center;
+            margin-top: var(--sp-6);
+        }
+
+        .day-header {
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            padding-bottom: var(--sp-4);
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            font-weight: 600;
+            position: relative;
+            background: #fff;
+        }
+
+        .day-cell.empty {
+            background: transparent;
+            border: none;
+        }
+
+        /* Status Colors */
+        .status-streak {
+            background-color: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .status-studied {
+            background-color: #fef9c3;
+            color: #854d0e;
+            border-color: #fef08a;
+        }
+
+        .status-none {
+            background-color: #f8fafc;
+            color: #94a3b8;
+        }
+
+        .status-today {
+            border: 2px solid var(--primary-color);
+        }
+
+        .day-mins {
+            font-size: 0.75rem;
+            font-weight: normal;
+            margin-top: 4px;
+        }
+
+        .streak-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--sp-6);
+            margin-bottom: var(--sp-8);
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%);
+            padding: var(--sp-6);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-light);
+            text-align: center;
+        }
+
+        .summary-val {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .summary-lbl {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: var(--sp-6);
+            margin-top: var(--sp-6);
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div style="padding: 0 var(--sp-2) var(--sp-8);">
+                <h2 class="logo-text" style="font-size: 1.25rem;">AI Study Planner</h2>
+            </div>
+            <nav class="flex-col flex gap-2">
+                <a href="{{ url_for('dashboard') }}" class="nav-item">
+                    <span class="nav-icon">📊</span> Dashboard
+                </a>
+                <a href="{{ url_for('subject_page') }}" class="nav-item">
+                    <span class="nav-icon">📚</span> Subjects
+                </a>
+                <a href="{{ url_for('session_page') }}" class="nav-item">
+                    <span class="nav-icon">⏱️</span> Study Sessions
+                </a>
+                <a href="{{ url_for('summary') }}" class="nav-item">
+                    <span class="nav-icon">📈</span> Analytics
+                </a>
+                <a href="{{ url_for('streak_history') }}" class="nav-item active">
+                    <span class="nav-icon">🔥</span> Streak History
+                </a>
+                <a href="{{ url_for('timetable') }}" class="nav-item">
+                    <span class="nav-icon">📅</span> Timetable
+                </a>
+                <a href="{{ url_for('set_goal') }}" class="nav-item">
+                    <span class="nav-icon">🎯</span> Exam Goal
+                </a>
+                <a href="{{ url_for('assistant') }}" class="nav-item">
+                    <span class="nav-icon">✨</span> AI Assistant
+                </a>
+            </nav>
+            <div style="margin-top: auto; padding-top: var(--sp-4); border-top: 1px solid var(--border-light);">
+                <a href="{{ url_for('logout') }}" class="nav-item" style="color: #ef4444;">
+                    <span class="nav-icon">🚪</span> Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="section-header">
+                <div>
+                    <h1 style="font-size: 1.8rem; font-weight: 700;">Streak History</h1>
+                    <p class="text-muted">Track your consistency and building habits.</p>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+            </header>
+
+            <div class="streak-summary">
+                <div class="summary-card">
+                    <div class="summary-lbl">Current Streak</div>
+                    <div class="summary-val">{{ current_streak }} <span
+                            style="font-size:1rem; font-weight:normal;">days</span></div>
+                </div>
+                <div class="summary-card" style="background: linear-gradient(135deg, #fff 0%, #eff6ff 100%);">
+                    <div class="summary-lbl">Longest Streak</div>
+                    <div class="summary-val">{{ longest_streak }} <span
+                            style="font-size:1rem; font-weight:normal;">days</span></div>
+                </div>
+            </div>
+
+            <div class="calendar-container">
+                <div style="text-align: center; margin-bottom: var(--sp-6);">
+                    <h2 style="font-size: 1.5rem; font-weight: 700;">{{ month_name }} {{ year }}</h2>
+                </div>
+
+                <div class="calendar-grid">
+                    <div class="day-header">Mon</div>
+                    <div class="day-header">Tue</div>
+                    <div class="day-header">Wed</div>
+                    <div class="day-header">Thu</div>
+                    <div class="day-header">Fri</div>
+                    <div class="day-header">Sat</div>
+                    <div class="day-header">Sun</div>
+
+                    {% for week in calendar_matrix %}
+                    {% for day in week %}
+                    {% if day == 0 %}
+                    <div class="day-cell empty"></div>
+                    {% else %}
+                    {# Construct date string YYYY-MM-DD #}
+                    {% set d_str = '%04d-%02d-%02d' % (year, month, day) %}
+                    {% set mins = activity_map.get(d_str, 0) %}
+
+                    {# Determine class #}
+                    {% if mins >= 30 %}
+                    {% set status_class = 'status-streak' %}
+                    {% elif mins > 0 %}
+                    {% set status_class = 'status-studied' %}
+                    {% else %}
+                    {% set status_class = 'status-none' %}
+                    {% endif %}
+
+                    {% if d_str == today_str %}
+                    {% set status_class = status_class ~ ' status-today' %}
+                    {% endif %}
+
+                    <div class="day-cell {{ status_class }}">
+                        <div>{{ day }}</div>
+                        {% if mins > 0 %}
+                        <div class="day-mins">{{ mins }}m</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    {% endfor %}
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="dot" style="background: #dcfce7; border: 1px solid #bbf7d0;"></div>
+                        <span>Streak Active (30m+)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot" style="background: #fef9c3; border: 1px solid #fef08a;"></div>
+                        <span>Studied (<30m)< /span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot" style="background: #f8fafc; border: 1px solid #e2e8f0;"></div>
+                        <span>No Study</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+</body>
+
+</html>

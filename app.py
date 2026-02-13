@@ -11,6 +11,7 @@ from functools import wraps
 from datetime import datetime, date, timedelta
 import re
 import requests
+import calendar
 
 from database import db
 from models.user import User
@@ -66,6 +67,76 @@ def calculate_study_goal(user_subjects, exam_date):
     recommended_daily_minutes = round(total_minutes / days_left)
 
     return total_minutes, recommended_daily_minutes
+
+
+
+def calculate_streak(user_id):
+    """
+    Calculates current and longest study streak.
+    A valid study day requires >= 30 minutes of total study time.
+    """
+    # 1. Fetch all sessions for this user, ordered by date
+    sessions = StudySession.query.filter_by(user_id=user_id).order_by(StudySession.date).all()
+
+    if not sessions:
+        return 0, 0
+
+    # 2. Group minutes by date
+    daily_minutes = {}
+    for s in sessions:
+        daily_minutes[s.date] = daily_minutes.get(s.date, 0) + s.duration
+
+    # 3. Filter only valid days (>= 30 mins)
+    valid_dates = sorted([d for d, mins in daily_minutes.items() if mins >= 30])
+
+    if not valid_dates:
+        return 0, 0
+
+    # 4. Calculate streaks
+    current_streak = 0
+    longest_streak = 0
+    temp_streak = 0
+    
+    # We iterate through valid dates to find consecutive sequences
+    # Since valid_dates is sorted, we can check gaps.
+    
+    # Check if the streak is active (today or yesterday must be in valid_dates)
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    
+    # Simple algorithm: iterate and check previous
+    # Initialize with the first date
+    if valid_dates:
+        temp_streak = 1
+        longest_streak = 1
+        
+        for i in range(1, len(valid_dates)):
+            delta = (valid_dates[i] - valid_dates[i-1]).days
+            if delta == 1:
+                # Consecutive
+                temp_streak += 1
+            else:
+                # Break
+                temp_streak = 1
+            
+            if temp_streak > longest_streak:
+                longest_streak = temp_streak
+        
+        # Determine current streak
+        # If the last valid date is today or yesterday, we work backwards to count the streak
+        last_valid = valid_dates[-1]
+        if last_valid == today or last_valid == yesterday:
+            # The streak is alive. Let's count backwards from the end
+            current_streak = 1
+            for i in range(len(valid_dates) - 2, -1, -1):
+                if (valid_dates[i+1] - valid_dates[i]).days == 1:
+                    current_streak += 1
+                else:
+                    break
+        else:
+            current_streak = 0
+
+    return current_streak, longest_streak
 
 
 # -------------------------------------------------
@@ -172,6 +243,10 @@ def dashboard():
             1
         )
 
+
+
+    current_streak, longest_streak = calculate_streak(user_id)
+
     return render_template(
         "dashboard.html",
         username=user.username,
@@ -179,7 +254,46 @@ def dashboard():
         total_sessions=total_sessions,
         total_minutes=total_minutes,
         goal=goal,
-        progress_percent=progress_percent
+        progress_percent=progress_percent,
+        current_streak=current_streak,
+        longest_streak=longest_streak
+    )
+
+
+@app.route("/streak_history")
+@login_required
+def streak_history():
+    user_id = session["user_id"]
+    current_streak, longest_streak = calculate_streak(user_id)
+    
+    # Get all sessions
+    sessions = StudySession.query.filter_by(user_id=user_id).all()
+    
+    # Process data for calendar (map date string -> minutes)
+    activity_map = {}
+    for s in sessions:
+        d_str = s.date.strftime("%Y-%m-%d")
+        activity_map[d_str] = activity_map.get(d_str, 0) + s.duration
+        
+    # Get current year/month
+    now = datetime.now()
+    year = now.year
+    month = now.month
+    
+    # Generate calendar matrix
+    cal = calendar.monthcalendar(year, month)
+    month_name = calendar.month_name[month]
+    
+    return render_template(
+        "streak_history.html",
+        current_streak=current_streak,
+        longest_streak=longest_streak,
+        activity_map=activity_map,
+        calendar_matrix=cal,
+        year=year,
+        month=month,
+        month_name=month_name,
+        today_str=now.strftime("%Y-%m-%d")
     )
 
 

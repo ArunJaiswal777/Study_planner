@@ -177,6 +177,9 @@
         <a href="{{ url_for('timetable') }}" class="nav-item">
           <span class="nav-icon">📅</span> Timetable
         </a>
+        <a href="{{ url_for('streak_history') }}" class="nav-item">
+          <span class="nav-icon">🔥</span> Streak History
+        </a>
         <a href="{{ url_for('set_goal') }}" class="nav-item">
           <span class="nav-icon">🎯</span> Exam Goal
         </a>
@@ -210,70 +213,97 @@
         <a href="{{ url_for('add_session') }}" class="btn btn-primary">+ Log Session</a>
       </header>
 
-      <!-- Stats Grid -->
-      <div class="stats-grid">
-        <div class="stat-card gradient-1">
-          <div class="stat-label">Total Subjects</div>
-          <div class="stat-value">{{ total_subjects }}</div>
-        </div>
-        <div class="stat-card gradient-2">
-          <div class="stat-label">Total Sessions</div>
-          <div class="stat-value">{{ total_sessions }}</div>
-        </div>
-        <div class="stat-card gradient-3">
-          <div class="stat-label">Minutes Studied</div>
-          <div class="stat-value">{{ total_minutes }}m</div>
-        </div>
+  </div>
+
+  <!-- Streak Grid (New) -->
+  <div class="stats-grid" style="margin-top: -1rem;">
+    <div class="stat-card gradient-1">
+      <div class="stat-label">Current Streak 🔥</div>
+      <div class="stat-value">
+        {{ current_streak }}
+        <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">days</span>
+      </div>
+      {% if current_streak >= 7 %}
+      <div
+        style="margin-top: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #d97706; background: #fffbeb; padding: 2px 8px; border-radius: 4px; display: inline-block;">
+        Consistent Learner
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="stat-card gradient-2">
+      <div class="stat-label">Longest Streak 🏆</div>
+      <div class="stat-value">
+        {{ longest_streak }}
+        <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">days</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Grid (Original) -->
+  <div class="stats-grid">
+    <div class="stat-card gradient-3">
+      <div class="stat-label">Total Minutes</div>
+      <div class="stat-value">{{ total_minutes }}m</div>
+    </div>
+    <div class="stat-card gradient-1">
+      <div class="stat-label">Total Subjects</div>
+      <div class="stat-value">{{ total_subjects }}</div>
+    </div>
+    <div class="stat-card gradient-2">
+      <div class="stat-label">Total Sessions</div>
+      <div class="stat-value">{{ total_sessions }}</div>
+    </div>
+  </div>
+
+  <!-- Goal Progress & Quick Actions -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--sp-6);">
+
+    <!-- Goal Card -->
+    <div class="card glass-card">
+      {% set goal_minutes = goal.total_required_minutes if goal else 0 %}
+      <div class="flex justify-between items-center" style="margin-bottom: var(--sp-4);">
+        <h3 class="font-bold">Exam Goal Progress</h3>
+        <span class="text-xs text-muted">Target: {{ goal_minutes }} mins</span>
       </div>
 
-      <!-- Goal Progress & Quick Actions -->
-      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--sp-6);">
-
-        <!-- Goal Card -->
-        <div class="card glass-card">
-          {% set goal_minutes = goal.total_required_minutes if goal else 0 %}
-          <div class="flex justify-between items-center" style="margin-bottom: var(--sp-4);">
-            <h3 class="font-bold">Exam Goal Progress</h3>
-            <span class="text-xs text-muted">Target: {{ goal_minutes }} mins</span>
-          </div>
-
-          {% if goal_minutes > 0 %}
-          {% set percent = (total_minutes / goal_minutes * 100) | round | int %}
-          <div class="flex justify-between text-sm" style="margin-bottom: 5px;">
-            <span class="font-medium {{ 'text-green-600' if percent >= 100 else 'text-blue-600' }}">
-              {{ percent }}% Completed
-            </span>
-            <span>{{ total_minutes }} / {{ goal_minutes }} m</span>
-          </div>
-          {% set progress_width = percent if percent < 100 else 100 %} <div class="progress-bg">
-            <div class="progress-fill" style="width:  progress_width "></div>
-        </div>
-        {% if percent >= 100 %}
-        <div
-          style="margin-top: 1rem; padding: 0.5rem; background: #dcfce7; color: #166534; border-radius: var(--radius-md); font-size: 0.875rem;">
-          🎉 Goal Achieved! Great job!
-        </div>
-        {% endif %}
-        {% else %}
-        <div class="text-muted text-center" style="padding: 1rem;">
-          No goal set yet.
-          <br>
-          <a href="{{ url_for('set_goal') }}" class="text-sm font-medium">Set a Goal &rarr;</a>
-        </div>
-        {% endif %}
+      {% if goal_minutes > 0 %}
+      {% set percent = (total_minutes / goal_minutes * 100) | round | int %}
+      <div class="flex justify-between text-sm" style="margin-bottom: 5px;">
+        <span class="font-medium {{ 'text-green-600' if percent >= 100 else 'text-blue-600' }}">
+          {{ percent }}% Completed
+        </span>
+        <span>{{ total_minutes }} / {{ goal_minutes }} m</span>
       </div>
+      {% set progress_width = percent if percent < 100 else 100 %} <div class="progress-bg">
+        <div class="progress-fill" style="width:  progress_width "></div>
+    </div>
+    {% if percent >= 100 %}
+    <div
+      style="margin-top: 1rem; padding: 0.5rem; background: #dcfce7; color: #166534; border-radius: var(--radius-md); font-size: 0.875rem;">
+      🎉 Goal Achieved! Great job!
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-muted text-center" style="padding: 1rem;">
+      No goal set yet.
+      <br>
+      <a href="{{ url_for('set_goal') }}" class="text-sm font-medium">Set a Goal &rarr;</a>
+    </div>
+    {% endif %}
+  </div>
 
-      <!-- Quick Actions -->
-      <div class="flex flex-col gap-4">
-        <a href="{{ url_for('add_subject') }}" class="action-card">
-          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📚</div>
-          <div class="font-medium text-sm">Add Subject</div>
-        </a>
-        <a href="{{ url_for('summary') }}" class="action-card">
-          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
-          <div class="font-medium text-sm">View Analytics</div>
-        </a>
-      </div>
+  <!-- Quick Actions -->
+  <div class="flex flex-col gap-4">
+    <a href="{{ url_for('add_subject') }}" class="action-card">
+      <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📚</div>
+      <div class="font-medium text-sm">Add Subject</div>
+    </a>
+    <a href="{{ url_for('summary') }}" class="action-card">
+      <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
+      <div class="font-medium text-sm">View Analytics</div>
+    </a>
+  </div>
 
   </div>
 

@@ -40,12 +40,10 @@
         <div class="form-group">
           <label for="date" class="form-label">Date</label>
           <input type="date" id="date" name="date" class="form-input" value="{{ study_session.date }}" required>
-        </div>
-
-        <div class="flex gap-4" style="margin-top: 2rem;">
-          <a href="{{ url_for('session_page') }}" class="btn btn-secondary" style="flex: 1;">Cancel</a>
-          <button type="submit" class="btn btn-primary" style="flex: 1;">Update Session</button>
-        </div>
+          <div class="flex gap-4" style="margin-top: 2rem;">
+            <a href="{{ url_for('session_page') }}" class="btn btn-secondary" style="flex: 1;">Cancel</a>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Update Session</button>
+          </div>
       </form>
     </div>
   </div>

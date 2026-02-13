@@ -106,6 +106,9 @@
         <a href="{{ url_for('timetable') }}" class="nav-item">
           <span class="nav-icon">📅</span> Timetable
         </a>
+        <a href="{{ url_for('streak_history') }}" class="nav-item">
+          <span class="nav-icon">🔥</span> Streak History
+        </a>
         <a href="{{ url_for('set_goal') }}" class="nav-item">
           <span class="nav-icon">🎯</span> Exam Goal
         </a>
@@ -159,8 +162,8 @@
               <div class="font-medium">{{ subject }}</div>
               <!-- Optional progress bar visual -->
               <div style="width: 200px; height: 4px; background: #f1f5f9; border-radius: 4px; margin-top: 6px;">
-                <div
-                  style="height: 100%; width: {{ (minutes / total_minutes * 100) if total_minutes > 0 else 0 }}%; background: var(--primary-gradient); border-radius: 4px;">
+                {% set percent = (minutes / total_minutes * 100) if total_minutes > 0 else 0 %}
+                <div style="height: 100%; width: percent background var(--primary-gradient); border-radius: 4px;">
                 </div>
               </div>
             </div>
